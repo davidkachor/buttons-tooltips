@@ -1,12 +1,8 @@
-import React, {
-	useEffect,
-	useLayoutEffect,
-	useRef,
-	useState,
-	useTransition,
-} from 'react'
+import React, {  useLayoutEffect, useRef, useState } from 'react'
+import Position from '../../types/position'
 import styled from 'styled-components'
 import ToolTip from './Tooltip/Tooltip'
+import canTooltipBePositioned from '../../helpers/canTooltipBePositioned'
 
 const StyledButton = styled.button`
 	padding: 10px;
@@ -31,35 +27,17 @@ const Button: React.FC<{
 	type?: 'button' | 'submit' | 'reset'
 	disabled?: boolean
 	className?: string
-	tooltip?: string
+	tooltipText?: string
+	tooltipPositions?: Position[]
 }> = props => {
 	const button = useRef<HTMLButtonElement>(null)
 	const tooltip = useRef<HTMLDivElement>(null)
 	const [buttonDOMRect, setButtonDOMRect] = useState<null | DOMRect>(null)
 	const [tooltipDOMRect, setTooltipDOMRect] = useState<null | DOMRect>(null)
-	const [windowSize, setWindowSize] = useState<null | {
-		width: number
-		height: number
-	}>(null)
-	const [position, setPosition] = useState<'top' | 'bottom' | 'right' | 'left'>(
-		'top'
+	const [position, setPosition] = useState<Position>(
+		!!props.tooltipPositions ? props.tooltipPositions[0] : 'top'
 	)
-	const [pending, startTransition] = useTransition()
 
-	// console.log('button', buttonDOMRect)
-	// console.log('tooltip', tooltipDOMRect)
-	useEffect(() => {
-		if (!windowSize)
-			setWindowSize({ width: window.innerWidth, height: window.innerHeight })
-
-		const resizeHandler = () =>
-			startTransition(() =>
-				setWindowSize({ width: window.innerWidth, height: window.innerHeight })
-			)
-
-		window.addEventListener('resize', resizeHandler)
-		return () => window.removeEventListener('resize', resizeHandler)
-	}, [windowSize])
 
 	useLayoutEffect(() => {
 		if (button.current !== null)
@@ -68,34 +46,58 @@ const Button: React.FC<{
 			setTooltipDOMRect(tooltip.current.getBoundingClientRect())
 	}, [button, tooltip])
 
-	useEffect(() => {
-		if (
-			buttonDOMRect === null ||
-			tooltipDOMRect === null ||
-			windowSize === null
+	useLayoutEffect(() => {
+		const resizeHandler = () => {
+			if (button.current !== null && tooltip.current !== null) {
+				setButtonDOMRect(button.current.getBoundingClientRect())
+				setTooltipDOMRect(tooltip.current.getBoundingClientRect())
+			}
+		}
+
+		window.addEventListener('resize', resizeHandler)
+		return () => window.removeEventListener('resize', resizeHandler)
+	}, [])
+
+	useLayoutEffect(() => {
+		if (buttonDOMRect === null || tooltipDOMRect === null) return
+
+		const positionChecking = canTooltipBePositioned.bind(
+			null,
+			buttonDOMRect,
+			tooltipDOMRect
 		)
-			return
-		if (buttonDOMRect.y >= tooltipDOMRect.height) {
-			setPosition('top')
-		} else if (buttonDOMRect.x >= tooltipDOMRect.width) {
-			setPosition('left')
-		} else if (
-			windowSize.width - (buttonDOMRect.x + buttonDOMRect.width) >=
-			tooltipDOMRect.width
-		) {
-			setPosition('right')
-		} else setPosition('bottom')
-	}, [buttonDOMRect, tooltipDOMRect, windowSize])
+
+		if (!props.tooltipPositions) {
+			if (positionChecking('top')) {
+				setPosition('top')
+			} else if (positionChecking('right')) {
+				setPosition('right')
+			} else if (positionChecking('left')) {
+				setPosition('left')
+			} else setPosition('bottom')
+		} else {
+			for (const item of props.tooltipPositions) {
+				if (
+					positionChecking(item) ||
+					props.tooltipPositions.indexOf(item) ===
+						props.tooltipPositions.length - 1
+				) {
+					setPosition(item)
+					break
+				}
+			}
+		}
+	}, [buttonDOMRect, props.tooltipPositions, tooltipDOMRect])
 
 	return (
 		<StyledButton ref={button} onClick={props.onClick} type={props.type}>
 			{props.children}
-			{!!props.tooltip && (
+			{!!props.tooltipText && (
 				<ToolTip
 					className="tooltip"
 					ref={tooltip}
 					position={position}
-					text={props.tooltip}
+					text={props.tooltipText}
 				/>
 			)}
 		</StyledButton>

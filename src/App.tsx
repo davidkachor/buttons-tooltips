@@ -3,24 +3,45 @@ import styled from 'styled-components'
 import Button from './components/Button/Button'
 
 const Container = styled.div`
-	display: grid;
-	grid-template-columns: 1fr 1fr 1fr;
-	grid-template-rows: 1fr 1fr 1fr;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
 	height: 100vh;
+`
+const Row = styled.div`
+	display: flex;
+	justify-content: space-between;
 `
 
 function App() {
 	return (
 		<Container>
-			<Button tooltip="asdasdasd">Button</Button>
-			<Button tooltip='asdasdasd'>Button</Button>
-			<Button tooltip='asdasdasd'>Button</Button>
-			<Button tooltip='asdasdasd'>Button</Button>
-			<Button tooltip='asdasdasd'>Button</Button>
-			<Button tooltip='asdasdasd'>Button</Button>
-			<Button tooltip='asdasdasd'>Button</Button>
-			<Button tooltip='asdasdasd'>Button</Button>
-			<Button tooltip='asdasdasd'>Button</Button>
+			<Row>
+				<Button tooltipText="asdasdasd" tooltipPositions={['bottom', 'top']}>
+					Button
+				</Button>
+				<Button tooltipText="asdasdasd">Button</Button>
+				<Button tooltipText="asdasdasd" tooltipPositions={['bottom', 'right']}>
+					Button
+				</Button>
+			</Row>
+			<Row>
+				<Button tooltipText="asdasdasd">Button</Button>
+				<Button tooltipText="asdasdasd" tooltipPositions={['right', 'left']}>
+					Button
+				</Button>
+				<Button tooltipText="asdasdasd">Button</Button>
+			</Row>
+			<Row>
+				<Button
+					tooltipText="asdasdasd"
+					tooltipPositions={['left', 'top', 'right']}
+				>
+					Button
+				</Button>
+				<Button tooltipText="asdasdasd">Button</Button>
+				<Button tooltipText="asdasdasd">Button</Button>
+			</Row>{' '}
 		</Container>
 	)
 }
